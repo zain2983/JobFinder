@@ -1,10 +1,11 @@
-# Google Sheets API Integration
+# JobFinder
 
-This project demonstrates how to interact with Google Sheets using the `gspread` library, along with other necessary tools for automation. It allows you to append data to a Google Sheet and manage sheet interactions programmatically.
+main.ipynb : contains the scraping of the subreddit "forhire"
+sheets.ipynb : contains the google sheet API
 
 ## Prerequisites
 
-Before running the code, you need to set up your Google Cloud Console and generate API credentials for Google Sheets access. Follow the instructions provided in the official `gspread` documentation:
+Follow this to setup API and shit 
 
 - [Google Sheets API Setup Guide](https://docs.gspread.org/en/latest/index.html)
 
