@@ -1,3 +1,5 @@
 /venv
 /cred.json
 /modules/llm_test.py
+/modules/__pycache__
+/modules/~
