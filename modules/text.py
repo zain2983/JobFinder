@@ -54,6 +54,16 @@ message_to_send = "Hello! This is a test message."
 
 # Set up Selenium WebDriver (ensure chromedriver is installed)
 options = webdriver.ChromeOptions()
+
+options.add_argument("--start-maximized")
+options.add_argument("--disable-blink-features=AutomationControlled")
+options.add_argument("--headless")  # Run Chrome in headless mode
+options.add_argument("--disable-gpu")  # Disable GPU acceleration (optional but useful in headless mode)
+options.add_argument("--no-sandbox")  # Recommended for headless mode in some environments
+options.add_argument("--disable-dev-shm-usage")  # Overcome limited resource problems
+options.add_argument("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/92.0.4515.159 Safari/537.36")
+
+
 options.add_argument("user-data-dir=~/.config/google-chrome/Default")  # For Chrome
 
 driver = webdriver.Chrome(options=options)
@@ -62,7 +72,6 @@ driver = webdriver.Chrome(options=options)
 for i in user_ids:
     print("USER IDS : ------ ",i)
 
-
 try:
     # Iterate over each username
     for user_id in user_ids:
@@ -70,58 +79,33 @@ try:
         rrr = f"https://chat.reddit.com/user/id/{user_id}"
         print("Link : " ,rrr)
         driver.get(rrr)
-        time.sleep(4)  # Wait for the page to load
+        time.sleep(2)  # Wait for the page to load
+
 
 
     try:
-        # Wait for the parent element of the shadow root to be present
-        parent_element = WebDriverWait(driver, 10).until(
-            EC.presence_of_element_located((By.CSS_SELECTOR, "body > faceplate-app > rs-app"))
-        )
-
-        # Access the shadow DOM and locate the textarea using JavaScript
-        textarea = driver.execute_script("""
-            let parent = document.querySelector("body > faceplate-app > rs-app").shadowRoot;
-            let direct_chat = parent.querySelector("div.container > rs-direct-chat").shadowRoot;
-            let composer = direct_chat.querySelector("section > rs-message-composer").shadowRoot;
-            let textarea = composer.querySelector("form > div > rs-textarea-auto-size");
-            return textarea.shadowRoot.querySelector("textarea");
+        # Execute JavaScript to access the textarea inside the shadow DOM
+        textarea_element = driver.execute_script("""
+            return document.querySelector("body > faceplate-app > rs-app").shadowRoot
+                .querySelector("div.container > rs-room-overlay-manager > rs-room").shadowRoot
+                .querySelector("main > rs-message-composer").shadowRoot
+                .querySelector("form > div > rs-textarea-auto-size textarea");
         """)
 
-        # Type a message into the located textarea
-        textarea.send_keys("Hello, this is a test message!")
-
-        print("Message successfully entered!")
-
+        # Interact with the located textarea
+        if textarea_element:
+            textarea_element.click()  # Focus the textarea
+            textarea_element.send_keys("Hello, this is a test message!")  # Send the message
+            textarea_element.send_keys(Keys.RETURN)
+            time.sleep(4)
+            print("Successfully interacted with the textarea!")
+        else:
+            print("Textarea element not found.")
     except Exception as e:
-        print("Error accessing the shadow DOM or entering the message:", e)
-
-        # Locate the input field using its class
-        # input_field = driver.find_element(By.CSS_SELECTOR, "input.text-16.sm\\:text-14")  # Use escape for special characters
-        # input_field = driver.find_element(By.CSS_SELECTOR, ".input-bar input")
-        # input_field = driver.find_element(By.CSS_SELECTOR, ".input-bar input")
-        # input_field = driver.find_element(By.CSS_SELECTOR, "div.input-bar input")
-        # input_field = WebDriverWait(driver, 10).until(
-        #     EC.presence_of_element_located((By.CSS_SELECTOR, "div.input-bar input"))
-        # )
-        # input_field = WebDriverWait(driver, 10).until(
-        #     EC.presence_of_element_located((By.CSS_SELECTOR, "div.input-bar input"))
-        # )
+        print("Error accessing the textarea:", e)
 
 
-        # # Locate the message input field (modify selector if necessary)
-        # message_field = driver.find_element(By.CSS_SELECTOR, ".DraftEditor-root")  # Update the selector if required
-
-        # # Enter the message
-        # message_field.send_keys(message_to_send)
-
-        # # Press Enter to send the message
-        # message_field.send_keys(Keys.RETURN)
-        # time.sleep(2)  # Wait for the message to send
 
 finally:
     # Close the browser
     driver.quit()
-
-
-
