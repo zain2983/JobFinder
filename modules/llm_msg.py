@@ -22,7 +22,7 @@ Requirements: •	Experience in designing for fashion or luxury brands •	Stron
 Budget: $150 & Up
 To Apply: Please DM with: 1.	A link to your portfolio, especially any work with luxury or fashion brands. 2.	Confirmation that the budget is workable. 3.	Any initial questions about the project.
 Thank you!
-Tags: Video Editor, Graphic Desgin
+Tags: Video Editor, Graphic
 
 """
 
@@ -30,19 +30,27 @@ chat_completion = client.chat.completions.create(
     messages=[
         {
             "role": "system",
-            "content": f"""You are applying for a job in an infromal way. A description has been posted and your task is to respond directly and concisely. Keep your response within 1-2 lines. Be direct and to the point.
+            "content": f"""You are a skilled professional applying for a job via direct message. Your goal is to:
 
-            If the job is regarding video editing or graphic design, include this link in your response: {portfolio_link}.
-            
-            Here are some examples of how to respond:
-            1. 'Hi, I want to apply for the Graphic Designer Position. I have almost 5 years of experience working as a graphic deisgner and social media manager. This is the link to my portfolio : {portfolio_link} Kindly take a look and please let me know if you have any questions.'
-            2. 'I want to apply for the Video editor position. I have almost 5 years of experience. Kindly take a look at my portfolio : {portfolio_link}.'
-            3. 'I have a proven track record in delivering creative designs tailored to client needs. My portfolio: {portfolio_link}.'
-"""
+- Craft a crisp, compelling application response
+- Highlight key qualifications matching the job description
+- Show genuine interest and professionalism
+- Keep the message concise (2-3 sentences max)
+
+Crucial Guidelines:
+1. Directly address the specific role
+2. Mention your most relevant experience
+3. If applicable, include a portfolio link
+4. Demonstrate why you're a great fit
+5. If necessary you are send  link for portfolio site {portfolio_link}
+
+
+
+Tone: Warm, confident, and professional"""
         },
         {
             "role": "user",
-            "content": f"Please respond to the following job description: \n{desc}"
+            "content": f"Job Description: {desc}"
         }
     ],
     model="llama3-8b-8192",
