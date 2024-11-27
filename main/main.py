@@ -102,7 +102,7 @@ def scrape(url_list):
         i=0
         # Loop through each post container and extract data
         
-        for post in posts[:6]:
+        for post in posts[:3]:
             post_id = post.get("id").replace("post-title-", "")
             title = post.get_text(strip=True)
             print(url," ===== " , i)
@@ -271,6 +271,46 @@ def get_user_id(username):
 
 
 
+
+
+def create_msg(description):
+
+    portfolio_link = "https://zain2983.framer.website/"
+    chat_completion = client.chat.completions.create(
+        messages=[
+            {
+                "role": "system",
+                "content": f"""You are a skilled professional applying for a job via direct message. Your goal is to:
+
+    - Craft a crisp, compelling application response
+    - Highlight key qualifications matching the job description
+    - Show genuine interest and professionalism
+    - Keep the message concise (2-3 sentences max)
+
+    Crucial Guidelines:
+    1. Directly address the specific role
+    2. Mention your most relevant experience
+    3. If applicable, include a portfolio link
+    4. Demonstrate why you're a great fit
+    5. If necessary you are send  link for portfolio site {portfolio_link}
+
+
+
+    Tone: Warm, confident, and professional"""
+            },
+            {
+                "role": "user",
+                "content": f"Job Description: {description}"
+            }
+        ],
+        model="llama3-8b-8192",
+        max_tokens=1256,
+    )
+    msg = (chat_completion.choices[0].message.content)
+    return msg
+
+
+
 if __name__ == "__main__":
 
     start_time = time.time()
@@ -310,8 +350,8 @@ if __name__ == "__main__":
 
     print(type(data_w_tags))
 
-    # filtered_data = [entry for entry in data_w_tags if entry.get("Tags") == "Python Developer"]
-    filtered_data = data_w_tags
+    filtered_data = [entry for entry in data_w_tags if entry.get("Tags") == "Python Developer"]
+    # filtered_data = data_w_tags
 
     for i in filtered_data:
         # print("UserID Link in for loop : " , i["UserID Link"])
@@ -320,15 +360,20 @@ if __name__ == "__main__":
 
 
     for i in filtered_data:
-        print("="*40)
-        print(i)
+        msg = create_msg(i["Description"])
+        i['msg'] = msg
 
 
     # for i in filtered_data:
-        # msg = create_msg(i["UserID Link"])  
+    #     print("="*40)
+    #     print(i)
 
 
 
+
+    #
+    # Enter code here for sending messages
+    #
 
 
     end_time = time.time()

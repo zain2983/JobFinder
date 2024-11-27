@@ -11,7 +11,7 @@ client = Groq(
 
 
 gd_portfolio = "https://www.behance.net/zenith_studio"
-python_dev_portfolio = "https://www.behance.net/zenith_studio"
+python_dev_portfolio = "https://zain2983.framer.website/"
 portfolio_link = "XXXXXXXX"
 
 
