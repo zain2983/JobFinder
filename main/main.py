@@ -1,22 +1,53 @@
-def main_func():
-    import csv
-    import re
-    from selenium import webdriver
-    from selenium.webdriver.common.by import By
-    from selenium.webdriver.chrome.service import Service
-    from webdriver_manager.chrome import ChromeDriverManager
-    from bs4 import BeautifulSoup
-    import time
+import re
+import time
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from bs4 import BeautifulSoup
+from groq import Groq
+import requests
+from bs4 import BeautifulSoup
+import json
+import re
+import time
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.common.keys import Keys
+import re
+from selenium import webdriver
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.service import Service
+from webdriver_manager.chrome import ChromeDriverManager
+from bs4 import BeautifulSoup
+import time
+from selenium.webdriver.common.by import By
+from selenium.webdriver.support.ui import WebDriverWait
+from selenium.webdriver.support import expected_conditions as EC
+
+
+GROQ_API_KEY = "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"
+
+client = Groq(
+    api_key=GROQ_API_KEY,
+)
+
+
+def scrape(url_list):
 
     # List of URLs to scrape
-    urls = [
-        "https://www.reddit.com/r/slavelabour/new/",
-        # "https://www.reddit.com/r/forhire/new/",
-        # "https://www.reddit.com/r/VideoEditor_forhire/new/",
-        # "https://www.reddit.com/r/DoneDirtCheap/new/",
-        # "https://www.reddit.com/r/freelance_forhire/new/",
-    ]
+    # urls = [
+    #     "https://www.reddit.com/r/slavelabour/new/",
+    #     # "https://www.reddit.com/r/forhire/new/",
+    #     # "https://www.reddit.com/r/VideoEditor_forhire/new/",
+    #     # "https://www.reddit.com/r/DoneDirtCheap/new/",
+    #     # "https://www.reddit.com/r/freelance_forhire/new/",
+    #     # "https://www.reddit.com/r/FreelanceProgramming/new/",
+    #     # "https://www.reddit.com/r/HireAnEditor/new/",
+    # ]
+    urls = url_list
 
+    print("starting to setup webdriver")
     # Set up the Chrome WebDriver
     options = webdriver.ChromeOptions()
     options.add_argument("--start-maximized")
@@ -29,10 +60,16 @@ def main_func():
 
     driver = webdriver.Chrome(service=Service(ChromeDriverManager().install()), options=options)
 
+    print('Completed settings for webdriver\nNow starting to tscrape data')
     scraped_data = []
 
+
     for url in urls:
+
+    # Scraping the Jobs
+
         driver.get(url)
+        time.sleep(1)
         print(f"Scraping {url}...")
 
         # Accept Reddit's cookies if prompted (optional)
@@ -42,13 +79,16 @@ def main_func():
         except:
             pass
 
-        # Scroll the page a few times to load more posts
-        scroll_pause_time = 2
-        scroll_count = 2
+        # # Scroll the page a few times to load more posts
+        # scroll_pause_time = 2
+        # scroll_count = 2
 
-        for _ in range(scroll_count):
-            driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-            time.sleep(scroll_pause_time)
+        # for _ in range(scroll_count):
+        #     driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+        #     time.sleep(scroll_pause_time)
+
+        driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+
 
         # After scrolling, get the page source for Beautiful Soup
         page_source = driver.page_source
@@ -59,11 +99,13 @@ def main_func():
         # Find all post containers
         posts = soup.find_all(id=lambda x: x and x.startswith("post-title-t3_"))
 
+        i=0
         # Loop through each post container and extract data
-        for post in posts:
+        
+        for post in posts[:6]:
             post_id = post.get("id").replace("post-title-", "")
             title = post.get_text(strip=True)
-
+            print(url," ===== " , i)
             link_tag = post.find_previous("a", href=True)
             user_id_link = link_tag['href'] if link_tag else "N/A"
             if user_id_link != "N/A" and not user_id_link.startswith("http"):
@@ -84,52 +126,193 @@ def main_func():
                 "Description": description
             }
             scraped_data.append(post_data)
+            i+=1
+
+        for i in scraped_data:
+            title = i['Title']
+            if re.search(r'\[Hiring\]', title, re.IGNORECASE):
+                i['Flair'] = "Job"
+            elif re.search(r'\[Task\]', title, re.IGNORECASE):
+                i['Flair'] = "Job"
+            elif re.search(r'\[task\]', title, re.IGNORECASE):
+                i['Flair'] = "Job"
+            elif re.search(r'Task', title, re.IGNORECASE):
+                i['Flair'] = "Job"
+            elif re.search(r'Hiring', title, re.IGNORECASE):
+                i['Flair'] = "Job"
+            else:
+                i['Flair'] = "Other"
+
+        # Filter the scraped data to retain only entries with flair "Job"
+        scraped_data = [job for job in scraped_data if job['Flair'] == "Job"]
 
     driver.quit()
+    return scraped_data
 
+
+
+def classify(scraped_data):
     # Flair and Tag Processing
     for i in scraped_data:
-        title = i['Title']
-        if re.search(r'\[For Hire\]', title, re.IGNORECASE):
-            i['Flair'] = "For Hire"
-        elif re.search(r'\[Hiring\]', title, re.IGNORECASE):
-            i['Flair'] = "Hiring"
-        else:
-            i['Flair'] = "Other"
+        # title = i['Title']
+        # if re.search(r'\[For Hire\]', title, re.IGNORECASE):
+        #     i['Flair'] = "For Hire"
+        # elif re.search(r'\[Hiring\]', title, re.IGNORECASE):
+        #     i['Flair'] = "Hiring"
+        # elif re.search(r'\[Task\]', title, re.IGNORECASE):
+        #     i['Flair'] = "Task"
+        # else:
+        #     i['Flair'] = "Other"
 
         # Define keyword patterns
         graphic_design_keywords = r"(photoshop|illustrator|UI/UX|graphic design|typography|posts)"
-        developer_keywords = r"(software development|programming|full-stack|backend|frontend|JavaScript|C\+\+|Java|Python|React|Angular|Node\.js|APIs|cloud computing|Git|RESTful|object-oriented programming|data structures|algorithms|Agile|CI/CD)"
+        # developer_keywords = r"(software development|programming|full-stack|backend|frontend|JavaScript|C\+\+|Java|Python|React|Angular|Node\.js|APIs|cloud computing|Git|RESTful|object-oriented programming|data structures|algorithms|Agile|CI/CD)"
         python_developer_keywords = r"(Python|Django|webscraper|webscrapper|webscrape|Flask|Pandas|NumPy|API development|REST APIs|FastAPI|object-oriented programming|data analysis|SQL|PostgreSQL|MySQL|MongoDB|machine learning|data science|ETL|testing|debugging|Git|unit testing|Docker|AWS|Azure|Lambda)"
         social_media_manager_keywords = r"(social media marketing|content creation|strategy|analytics|branding|Instagram|Facebook|Twitter|LinkedIn|TikTok|SEO|Hootsuite|Sprout Social|Buffer|Engagement|hashtags|campaigns|community management|metrics|advertising|paid ads|audience targeting)"
         video_editor_keywords = r"(video editing|Premiere Pro|After Effects|DaVinci Resolve|Final Cut Pro|motion graphics|color grading|visual effects|animation|storyboarding|YouTube|social media videos|audio editing|transitions|text overlays|video production|timelines|cutting|rendering|storytelling)"
-        mern_stack_developer_keywords = r"(MERN stack|MongoDB|Express\.js|React\.js|Node\.js|JavaScript|REST APIs|full-stack development|front-end|back-end|NoSQL|JWT authentication|React hooks|Redux|state management|MongoDB Atlas|Webpack|npm|Git|CSS|HTML|Agile)"
+        # mern_stack_developer_keywords = r"(MERN stack|MongoDB|Express\.js|React\.js|Node\.js|JavaScript|REST APIs|full-stack development|front-end|back-end|NoSQL|JWT authentication|React hooks|Redux|state management|MongoDB Atlas|Webpack|npm|Git|CSS|HTML|Agile)"
 
         description = i.get('Description', '')
         tags = []
 
         if re.search(graphic_design_keywords, description, re.IGNORECASE):
             tags.append("GD (graphic design)")
-        if re.search(developer_keywords, description, re.IGNORECASE):
-            tags.append("Developer")
+        # if re.search(developer_keywords, description, re.IGNORECASE):
+            # tags.append("Developer")
         if re.search(python_developer_keywords, description, re.IGNORECASE):
             tags.append("Python Developer")
         if re.search(social_media_manager_keywords, description, re.IGNORECASE):
             tags.append("Social Media Manager")
         if re.search(video_editor_keywords, description, re.IGNORECASE):
             tags.append("Video Editor")
-        if re.search(mern_stack_developer_keywords, description, re.IGNORECASE):
-            tags.append("MERN Stack Developer")
+        # if re.search(mern_stack_developer_keywords, description, re.IGNORECASE):
+            # tags.append("MERN Stack Developer")
 
         i['Tags'] = tags if tags else ["Other"]
 
-    # Print results with tags
-    for i in scraped_data:
-        print(f"Title: {i['Title']}")
-        print(f"Description: {i['Description']}")
-        print(f"Tags: {', '.join(i['Tags'])}")
-        print("=" * 40)
+
+    # # Print results with tags
+    # for i in scraped_data:
+    #     print(f"Title: {i['Title']}")
+    #     print(f"Description: {i['Description'][:50]}")
+    #     print(f"UserID Link: {i['UserID Link']}")
+    #     print(f"Tags: {', '.join(i['Tags'])}")
+    #     print("=" * 40)
+
+    # print(f"Scraped for url : {url} \nTotal Scraped : {len(scraped_data)}") 
+    
+    return scraped_data
+
+
+
+
+def classify_with_groq(desc):
+
+
+    chat_completion = client.chat.completions.create(
+        messages=[
+            {
+                "role": "system",
+                "content": f"""Based on the description given below, respond with one word what the job is about. Choose one word from the following: Graphic Desginer , Video Editor , Python Dev
+
+    """
+            },
+            {
+                "role": "user",
+                "content": f"Please respond to the following job description: \n{desc}"
+            }
+        ],
+        model="llama3-8b-8192",
+        max_tokens=1256,
+    )
+
+
+
+    print(chat_completion.choices[0].message.content)
+
+
+    return True
+
+
+
+def get_user_id(username):
+    # Define the user's profile URL
+    user_url = f"https://www.reddit.com/user/{username}/"
+
+    # Send a GET request
+    headers = {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
+    }
+    response = requests.get(user_url, headers=headers)
+
+    if response.status_code == 200:
+        # Parse the HTML content
+        soup = BeautifulSoup(response.text, "html.parser")
+
+        # Find the <reddit-page-data> tag
+        element = soup.find("reddit-page-data")
+        if element:
+            data_attribute = element["data"]  # Extract the "data" attribute
+            user_data = json.loads(data_attribute)  # Parse the JSON data
+
+            # Extract the user ID
+            user_id = user_data["profile"]["id"]
+            return user_id
+        else:
+            print("reddit-page-data tag not found.")
+            return None
+    else:
+        print(f"Failed to fetch page for {username}. Status code: {response.status_code}")
+        return None
+
+
 
 if __name__ == "__main__":
-    main_func()
+
+    start_time = time.time()
+
+
+
+    # url = "https://www.reddit.com/r/slavelabour/new/"
+    # data1 = scrape(url_pram=url)
+    # # data_w_tags = classify(scraped_data=data)
+
+    # url = "https://www.reddit.com/r/forhire/new/"
+    # data2 = scrape(url_pram=url)
+
+    # # This data variable only contains Jobs 
+    # # i.e only people looking to hire not people who are looking for job ( i.e no [For Hire] or [Offer] )
+    # data = data1 + data2
+
+
+
+    # url = "https://www.reddit.com/r/forhire/new/"
+    # url = "https://www.reddit.com/r/slavelabour/new/"
+
+    urls = [
+        "https://www.reddit.com/r/forhire/new/",
+        "https://www.reddit.com/r/slavelabour/new/",
+    ]
+
+    scraped_data = scrape(url_list=urls)
+    # for i in data: 
+    #     print(f"Title: {i['Title']}")
+    #     print(f"Description: {i['Description'][:50]}")
+    #     print(f"UserID Link: {i['UserID Link']}")
+    #     print("=" * 40)
+    
+    
+    data_w_tags = classify(scraped_data=scraped_data)
+
+
+
+
+
+
+
+    end_time = time.time()
+    execution_time = end_time - start_time
+    print(f"Total execution time: {execution_time:.4f} seconds")
+
+
 

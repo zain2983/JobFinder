@@ -1,5 +1,11 @@
 /venv
 /cred.json
-/modules/llm_test.py
+
+# /modules/llm_test.py
+# /modules/llm_msg.py
+# /modules/llm_classify.py
+
+/modules/main_test.ipynb
+
 /modules/__pycache__
 /modules/~

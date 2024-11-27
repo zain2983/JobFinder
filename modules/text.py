@@ -98,7 +98,7 @@ try:
             textarea_element.send_keys("Hello, this is a test message!")  # Send the message
             textarea_element.send_keys(Keys.RETURN)
             time.sleep(4)
-            print("Successfully interacted with the textarea!")
+            print("Successfully sent message!")
         else:
             print("Textarea element not found.")
     except Exception as e:
