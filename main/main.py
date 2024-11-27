@@ -173,22 +173,22 @@ def classify(scraped_data):
         # mern_stack_developer_keywords = r"(MERN stack|MongoDB|Express\.js|React\.js|Node\.js|JavaScript|REST APIs|full-stack development|front-end|back-end|NoSQL|JWT authentication|React hooks|Redux|state management|MongoDB Atlas|Webpack|npm|Git|CSS|HTML|Agile)"
 
         description = i.get('Description', '')
-        tags = []
+        tags = "Other"
 
         if re.search(graphic_design_keywords, description, re.IGNORECASE):
-            tags.append("GD (graphic design)")
-        # if re.search(developer_keywords, description, re.IGNORECASE):
-            # tags.append("Developer")
-        if re.search(python_developer_keywords, description, re.IGNORECASE):
-            tags.append("Python Developer")
+            tags = "GD (graphic design)"
         if re.search(social_media_manager_keywords, description, re.IGNORECASE):
-            tags.append("Social Media Manager")
+            tags = ("Social Media Manager")
         if re.search(video_editor_keywords, description, re.IGNORECASE):
-            tags.append("Video Editor")
+            tags = ("Video Editor")
+        if re.search(python_developer_keywords, description, re.IGNORECASE):
+            tags = ("Python Developer")
+        # if re.search(developer_keywords, description, re.IGNORECASE):
+            # tags = ("Developer")
         # if re.search(mern_stack_developer_keywords, description, re.IGNORECASE):
-            # tags.append("MERN Stack Developer")
+            # tags = ("MERN Stack Developer")
 
-        i['Tags'] = tags if tags else ["Other"]
+        i['Tags'] = [tags]
 
 
     # # Print results with tags
@@ -236,9 +236,13 @@ def classify_with_groq(desc):
 
 
 def get_user_id(username):
+    print("="*40)
+    print("entered user id function")
+    print("="*40)
     # Define the user's profile URL
     user_url = f"https://www.reddit.com/user/{username}/"
-
+    user_url = username
+    print(user_url)
     # Send a GET request
     headers = {
         "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/114.0.0.0 Safari/537.36"
@@ -304,7 +308,24 @@ if __name__ == "__main__":
     
     data_w_tags = classify(scraped_data=scraped_data)
 
+    print(type(data_w_tags))
 
+    # filtered_data = [entry for entry in data_w_tags if entry.get("Tags") == "Python Developer"]
+    filtered_data = data_w_tags
+
+    for i in filtered_data:
+        # print("UserID Link in for loop : " , i["UserID Link"])
+        user_id = get_user_id(i["UserID Link"])  # Fetch user_id using the function
+        i["user_id"] = user_id  # Add the fetched user_id to the dictionary
+
+
+    for i in filtered_data:
+        print("="*40)
+        print(i)
+
+
+    # for i in filtered_data:
+        # msg = create_msg(i["UserID Link"])  
 
 
 
