@@ -379,6 +379,3 @@ if __name__ == "__main__":
     end_time = time.time()
     execution_time = end_time - start_time
     print(f"Total execution time: {execution_time:.4f} seconds")
-
-
-
