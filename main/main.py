@@ -24,6 +24,8 @@ import time
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+from datetime import datetime
+import sys
 
 
 GROQ_API_KEY = "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"
@@ -33,7 +35,7 @@ client = Groq(
 )
 
 
-def scrape(url_list):
+def scrape(url_list,total_posts=3):
 
     # List of URLs to scrape
     # urls = [
@@ -102,7 +104,7 @@ def scrape(url_list):
         i=0
         # Loop through each post container and extract data
         
-        for post in posts[:3]:
+        for post in posts[:total_posts]:
             post_id = post.get("id").replace("post-title-", "")
             title = post.get_text(strip=True)
             print(url," ===== " , i)
@@ -132,13 +134,11 @@ def scrape(url_list):
             title = i['Title']
             if re.search(r'\[Hiring\]', title, re.IGNORECASE):
                 i['Flair'] = "Job"
+            elif re.search(r'\[hiring\]', title, re.IGNORECASE):
+                i['Flair'] = "Job"
             elif re.search(r'\[Task\]', title, re.IGNORECASE):
                 i['Flair'] = "Job"
             elif re.search(r'\[task\]', title, re.IGNORECASE):
-                i['Flair'] = "Job"
-            elif re.search(r'Task', title, re.IGNORECASE):
-                i['Flair'] = "Job"
-            elif re.search(r'Hiring', title, re.IGNORECASE):
                 i['Flair'] = "Job"
             else:
                 i['Flair'] = "Other"
@@ -165,22 +165,22 @@ def classify(scraped_data):
         #     i['Flair'] = "Other"
 
         # Define keyword patterns
-        graphic_design_keywords = r"(photoshop|illustrator|UI/UX|graphic design|typography|posts)"
+        python_developer_keywords = r"(Python|Django|webscraper|webscrapper|webscrape|Flask|Pandas|NumPy|API development|REST APIs|FastAPI|object-oriented programming|data analysis|SQL|PostgreSQL|MySQL|MongoDB|machine learning|data science)"
         # developer_keywords = r"(software development|programming|full-stack|backend|frontend|JavaScript|C\+\+|Java|Python|React|Angular|Node\.js|APIs|cloud computing|Git|RESTful|object-oriented programming|data structures|algorithms|Agile|CI/CD)"
-        python_developer_keywords = r"(Python|Django|webscraper|webscrapper|webscrape|Flask|Pandas|NumPy|API development|REST APIs|FastAPI|object-oriented programming|data analysis|SQL|PostgreSQL|MySQL|MongoDB|machine learning|data science|ETL|testing|debugging|Git|unit testing|Docker|AWS|Azure|Lambda)"
-        social_media_manager_keywords = r"(social media marketing|content creation|strategy|analytics|branding|Instagram|Facebook|Twitter|LinkedIn|TikTok|SEO|Hootsuite|Sprout Social|Buffer|Engagement|hashtags|campaigns|community management|metrics|advertising|paid ads|audience targeting)"
-        video_editor_keywords = r"(video editing|Premiere Pro|After Effects|DaVinci Resolve|Final Cut Pro|motion graphics|color grading|visual effects|animation|storyboarding|YouTube|social media videos|audio editing|transitions|text overlays|video production|timelines|cutting|rendering|storytelling)"
+        # graphic_design_keywords = r"(photoshop|illustrator|UI/UX|graphic design|typography|posts)"
+        # social_media_manager_keywords = r"(social media marketing|content creation|strategy|analytics|branding|Instagram|Facebook|Twitter|LinkedIn|TikTok|SEO|Hootsuite|Sprout Social|Buffer|Engagement|hashtags|campaigns|community management|metrics|advertising|paid ads|audience targeting)"
+        # video_editor_keywords = r"(video editing|Premiere Pro|After Effects|DaVinci Resolve|Final Cut Pro|motion graphics|color grading|visual effects|animation|storyboarding|YouTube|social media videos|audio editing|transitions|text overlays|video production|timelines|cutting|rendering|storytelling)"
         # mern_stack_developer_keywords = r"(MERN stack|MongoDB|Express\.js|React\.js|Node\.js|JavaScript|REST APIs|full-stack development|front-end|back-end|NoSQL|JWT authentication|React hooks|Redux|state management|MongoDB Atlas|Webpack|npm|Git|CSS|HTML|Agile)"
 
         description = i.get('Description', '')
         tags = "Other"
 
-        if re.search(graphic_design_keywords, description, re.IGNORECASE):
-            tags = "GD (graphic design)"
-        if re.search(social_media_manager_keywords, description, re.IGNORECASE):
-            tags = ("Social Media Manager")
-        if re.search(video_editor_keywords, description, re.IGNORECASE):
-            tags = ("Video Editor")
+        # if re.search(graphic_design_keywords, description, re.IGNORECASE):
+        #     tags = "GD (graphic design)"
+        # if re.search(social_media_manager_keywords, description, re.IGNORECASE):
+        #     tags = ("Social Media Manager")
+        # if re.search(video_editor_keywords, description, re.IGNORECASE):
+        #     tags = ("Video Editor")
         if re.search(python_developer_keywords, description, re.IGNORECASE):
             tags = ("Python Developer")
         # if re.search(developer_keywords, description, re.IGNORECASE):
@@ -273,9 +273,13 @@ def get_user_id(username):
 
 
 
-def create_msg(description):
+def create_msg(description,verbose=False):
 
     portfolio_link = "https://zain2983.framer.website/"
+
+    if verbose:
+        print("Sending req to groq")
+
     chat_completion = client.chat.completions.create(
         messages=[
             {
@@ -307,6 +311,10 @@ def create_msg(description):
         max_tokens=1256,
     )
     msg = (chat_completion.choices[0].message.content)
+
+    if verbose:
+        print("Message : " , msg )
+
     return msg
 
 
@@ -317,41 +325,31 @@ if __name__ == "__main__":
 
 
 
-    # url = "https://www.reddit.com/r/slavelabour/new/"
-    # data1 = scrape(url_pram=url)
-    # # data_w_tags = classify(scraped_data=data)
+    def read_outreach_list(filename='outreached.txt'):
+        with open(filename, 'r') as file:
+            # Read lines and strip whitespace
+            return [line.strip() for line in file if line.strip()]
 
-    # url = "https://www.reddit.com/r/forhire/new/"
-    # data2 = scrape(url_pram=url)
-
-    # # This data variable only contains Jobs 
-    # # i.e only people looking to hire not people who are looking for job ( i.e no [For Hire] or [Offer] )
-    # data = data1 + data2
+    outreach_list = read_outreach_list()
+    print(outreach_list)
 
 
-
-    # url = "https://www.reddit.com/r/forhire/new/"
-    # url = "https://www.reddit.com/r/slavelabour/new/"
 
     urls = [
-        "https://www.reddit.com/r/forhire/new/",
-        "https://www.reddit.com/r/slavelabour/new/",
+        # "https://www.reddit.com/r/forhire/new/",
+        # "https://www.reddit.com/r/slavelabour/new/",
+        "https://www.reddit.com/r/redditjobsbot/",
+
     ]
 
-    scraped_data = scrape(url_list=urls)
-    # for i in data: 
-    #     print(f"Title: {i['Title']}")
-    #     print(f"Description: {i['Description'][:50]}")
-    #     print(f"UserID Link: {i['UserID Link']}")
-    #     print("=" * 40)
-    
-    
+    scraped_data = scrape(url_list=urls,total_posts=3)
+
     data_w_tags = classify(scraped_data=scraped_data)
 
-    print(type(data_w_tags))
+    filtered_data = [entry for entry in data_w_tags if "Python Developer" in entry.get("Tags", [])]
 
-    filtered_data = [entry for entry in data_w_tags if entry.get("Tags") == "Python Developer"]
-    # filtered_data = data_w_tags
+    post_ids = [post['Post ID'] for post in filtered_data]
+    print(post_ids)
 
     for i in filtered_data:
         # print("UserID Link in for loop : " , i["UserID Link"])
@@ -359,16 +357,35 @@ if __name__ == "__main__":
         i["user_id"] = user_id  # Add the fetched user_id to the dictionary
 
 
-    for i in filtered_data:
-        msg = create_msg(i["Description"])
-        i['msg'] = msg
-
-
     # for i in filtered_data:
-    #     print("="*40)
-    #     print(i)
+    #     msg = create_msg(i["Description"],verbose=True)
+    #     i['msg'] = msg
 
 
+    print("="*40)
+    print("="*40)
+    print("="*40)
+
+    for i in filtered_data:
+        print("="*40)
+        print(i)
+
+
+
+    with open("log.txt", "a") as file:
+        file.write("="*40)
+        file.write("\n")
+
+        file.write("="*40)
+        file.write("\n")
+
+        file.write("="*40)
+        file.write("\n")
+        for item in filtered_data:
+            timestamp = datetime.now()  # Get the current timestamp
+            file.write(f"{timestamp} - {item}\n")
+
+    print("Wrote in the file : filtered_data")
 
 
     #

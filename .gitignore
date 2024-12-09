@@ -5,6 +5,12 @@
 # /modules/llm_msg.py
 # /modules/llm_classify.py
 
+/trial/keyword.py
+
+/main/log.txt
+/main/outreached.txt
+
+
 /modules/main_test.ipynb
 
 /modules/__pycache__
