@@ -179,18 +179,35 @@ if st.button("Scrape"):
     if subreddits_input and keyword:
         with st.spinner("Getting posts"):
             subreddits = [sub.strip() for sub in subreddits_input.split(",") if sub.strip()]
-            
-            formatted_subreddits = [url if url.endswith("/") else url + "/" for url in subreddits]
 
+            # subreddits = [url if url.endswith("/") else url + "/" for url in subreddits]
+
+            formatted_subreddits = []
+
+            for item in subreddits:
+                if item.startswith("http"):  # Check if the input is a URL
+                    # Ensure the URL ends with a "/"
+                    formatted_url = item if item.endswith("/") else item + "/"
+                else:
+                    # Construct the URL from the subreddit name
+                    formatted_url = f"https://www.reddit.com/r/{item}/"
+                
+                formatted_subreddits.append(formatted_url)
+
+            subreddits = formatted_subreddits
             subreddits = [sub + "new/" for sub in subreddits]
             
+            for i in subreddits:
+                print(i)
+
+
             keywords = [sub.strip() for sub in keyword.split(",") if sub.strip()]
             print("Keywords : " , keywords)
 
-            scraped_posts = scrape(url_list=subreddits)
-            data_w_tags = classify(scraped_data=scraped_posts,keywords=keywords)
-
-
+            # scraped_posts = scrape(url_list=subreddits)
+            # data_w_tags = classify(scraped_data=scraped_posts,keywords=keywords)
+            scraped_posts = []
+            data_w_tags = []
         
         # scraped_posts = [  # Replace with actual scraped data
         #     f"Post {i}: A post about {keywords} in subreddit {subreddits}" 
